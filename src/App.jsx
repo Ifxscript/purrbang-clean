@@ -6,10 +6,11 @@ import LoadingScreen from './pages/LoadingScreen';
 const MIN_LOADING_TIME = 2000; // 2 seconds minimum
 
 function App() {
-  const [page, setPage] = useState('landing'); // 'landing', 'loading', 'collection'
+  const [page, setPage] = useState('loading'); // Initialize at 'loading' to run on first visit
   const [loadProgress, setLoadProgress] = useState(0);
   const dataLoadedRef = useRef(false);
   const loadStartTimeRef = useRef(null);
+  const isInitialLoadRef = useRef(true);
 
   // Handle loading when page changes to 'loading'
   useEffect(() => {
@@ -58,9 +59,18 @@ function App() {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash;
+      
+      // If direct deep link to collection on initial load, force loading screen first
       if (hash === '#/collection') {
-        setPage('collection');
+        if (isInitialLoadRef.current) {
+          isInitialLoadRef.current = false;
+          window.location.hash = '#/loading';
+          setPage('loading');
+        } else {
+          setPage('collection');
+        }
       } else if (hash === '#/loading') {
+        isInitialLoadRef.current = false;
         setPage('loading');
       } else {
         setPage('landing');
