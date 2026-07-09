@@ -149,7 +149,7 @@ function setup() {
     // -------------------------------------
 
     // Freeze the animation so the artwork loads static to save CPU
-    noLoop();
+    // noLoop();
 }
 
 function draw() {
