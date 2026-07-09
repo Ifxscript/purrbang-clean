@@ -300,11 +300,12 @@ function CollectionPage({ onNavigateToTraits }) {
                 <main className={`collection-page__grid ${sidebarOpen ? 'sidebar-open' : ''} mobile-cols-${mobileGridCols}`}>
                     {displayedCats.map((cat, index) => {
                         const originalIndex = allCats.findIndex(c => c.inscriptionId === cat.inscriptionId);
+                        const isTestImage = originalIndex >= 0 && originalIndex <= 4;
                         return (
                             <SparkCard
                                 key={cat.inscriptionId}
                                 title={`Motor #${String(originalIndex + 1).padStart(3, '0')}`}
-                                imageUrl={imageUrls[cat.inscriptionId] || `/images/${cat.inscriptionId}.jpg`}
+                                imageUrl={isTestImage ? `/images-test/${originalIndex + 1}.jpg` : (imageUrls[cat.inscriptionId] || `/images/${cat.inscriptionId}.jpg`)}
                                 traits={cat.traits}
                                 onClick={() => handleCardClick(cat, index)}
                             />
