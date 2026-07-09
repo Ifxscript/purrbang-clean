@@ -62,9 +62,9 @@ function setup() {
 
     col = random(colorPalettes);
     window.traits["Palette"] = colorPalettes.indexOf(col);
-    // Limit canvas resolution on mobile devices to prevent WebKit out-of-memory crashes
+    // Limit canvas resolution on mobile devices to 2x (retina standard) to keep it sharp but prevent crashes
     if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-        pixelDensity(1);
+        pixelDensity(2);
     }
     // createCanvas(262.5, 350);
     let cvs = createCanvas(windowHeight * 0.675, windowHeight * 0.9);
