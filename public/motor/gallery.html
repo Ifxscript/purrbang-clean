@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motor — Gallery</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body { background: #1a1a1a; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            transition: gap 0.3s, padding 0.3s;
+        }
+        
+        .grid.with-gap {
+            gap: 10px;
+            padding: 10px;
+        }
+
+        .cell {
+            width: 100%;
+            aspect-ratio: 3 / 4;
+            overflow: hidden;
+            position: relative;
+            background: #111;
+        }
+
+        iframe, img {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+            position: absolute;
+            top: 0; left: 0;
+            object-fit: cover;
+        }
+
+        /* Hidden iframe — sketch runs off-screen, captured, then discarded */
+        iframe { opacity: 0; pointer-events: none; }
+
+        .badge {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            font-size: 10px;
+            color: #333;
+            user-select: none;
+        }
+
+        #status {
+            position: fixed;
+            bottom: 10px;
+            right: 14px;
+            font-family: monospace;
+            font-size: 11px;
+            color: #555;
+            pointer-events: none;
+        }
+
+        #gapToggle {
+            position: fixed;
+            bottom: 10px;
+            left: 14px;
+            font-family: monospace;
+            font-size: 11px;
+            background: #333;
+            color: #ccc;
+            border: none;
+            padding: 4px 8px;
+            cursor: pointer;
+            border-radius: 4px;
+            z-index: 100;
+        }
+        
+        #gapToggle:hover {
+            background: #555;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+<div class="grid with-gap" id="grid"></div>
+<div id="status"></div>
+<button id="gapToggle">Toggle Gap</button>
+
+<script>
+// ── Config ───────────────────────────────────────────────────────────────────
+let seedsList = [];
+let TOTAL = 0;
+const CACHE_VER    = 'motor-g-v1';   // bump this string to invalidate all cached frames
+const CAPTURE_WAIT = 2200;           // ms after iframe load before grabbing canvas
+const BATCH_SIZE   = 3;             // iframes rendered in parallel at a time
+
+// ── DOM ──────────────────────────────────────────────────────────────────────
+const grid   = document.getElementById('grid');
+const status = document.getElementById('status');
+const cells  = [];
+
+// ── Cache helpers (localStorage + JPEG to stay under quota) ──────────────────
+function cKey(i)    { return `${CACHE_VER}:${seedsList[i].seed}`; }
+
+function cacheGet(i) {
+    try { return localStorage.getItem(cKey(i)); }
+    catch { return null; }
+}
+
+function cacheSet(i, dataUrl) {
+    try {
+        localStorage.setItem(cKey(i), dataUrl);
+    } catch (e) {
+        // QuotaExceededError — silently skip; cell stays as live iframe fallback
+        console.warn(`gallery cache full at cell ${i}`, e.name);
+    }
+}
+
+function cacheClear() {
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith(CACHE_VER)) localStorage.removeItem(key);
+    }
+}
+
+// ── Display helpers ───────────────────────────────────────────────────────────
+function showImg(cell, dataUrl) {
+    cell.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    cell.appendChild(img);
+}
+
+function showLive(cell, iframe) {
+    // capture failed — leave iframe visible as a live fallback
+    cell.innerHTML = '';
+    iframe.style.opacity = '1';
+    iframe.style.pointerEvents = 'auto';
+    cell.appendChild(iframe);
+}
+
+// ── Render one uncached cell ──────────────────────────────────────────────────
+function renderCell(i) {
+    return new Promise(resolve => {
+        const cell   = cells[i];
+        const iframe = document.createElement('iframe');
+        iframe.src   = `index.html?seed=${seedsList[i].seed}`;
+        cell.appendChild(iframe);
+
+        iframe.addEventListener('load', () => {
+            setTimeout(async () => {
+                try {
+                    const canvas = iframe.contentWindow?.document?.querySelector('canvas');
+                    if (!canvas) throw new Error('no canvas');
+
+                    // JPEG at 0.88 quality
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+                    showImg(cell, dataUrl);
+                    
+                    // Post to local server to save this image permanently to hard drive
+                    await fetch("http://localhost:3000/save-image", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ seed: seedsList[i].seed, dataUrl: dataUrl })
+                    });
+                } catch (e) {
+                    console.warn(`cell ${i} capture failed:`, e);
+                    showLive(cell, iframe);
+                }
+                resolve();
+            }, CAPTURE_WAIT);
+        });
+
+        // Safety: if iframe never fires 'load', resolve after a generous timeout
+        setTimeout(resolve, CAPTURE_WAIT + 6000);
+    });
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
+async function init() {
+    try {
+        status.textContent = 'loading seeds from curator server...';
+        const res = await fetch("http://localhost:3000/status");
+        const data = await res.json();
+        seedsList = data.seeds || [];
+        TOTAL = seedsList.length;
+
+        if (TOTAL === 0) {
+            status.textContent = 'No curated seeds found. Start curating first!';
+            return;
+        }
+
+        // Dynamically create grid cells based on total seeds
+        grid.innerHTML = '';
+        for (let i = 0; i < TOTAL; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            // We set an id so we can target this cell easily
+            cell.id = `cell-${i}`;
+            cell.innerHTML = `<div class="badge">${i + 1}</div>`;
+            grid.appendChild(cell);
+            cells.push(cell);
+        }
+
+        const uncached = [];
+
+        // Pass 1: Try to load the image from local cache directory
+        // Since we are running on a local file system, if a file doesn't exist, the browser will trigger 'onerror'
+        for (let i = 0; i < TOTAL; i++) {
+            const index = i + 1;
+            const img = document.createElement('img');
+            img.src = `cache/${index}.jpg`;
+            
+            const promise = new Promise((resolve) => {
+                img.onload = () => {
+                    // Cache hits! Render the image and discard the cell badge
+                    showImg(cells[i], img.src);
+                    resolve(true); // cached
+                };
+                img.onerror = () => {
+                    // Cache misses! We need to render this cell using iframe
+                    uncached.push(i);
+                    resolve(false); // uncached
+                };
+            });
+            
+            // Limit parallel image checks to avoid clogging the browser loader
+            if (i % 20 === 0) await new Promise(r => setTimeout(r, 5));
+        }
+
+        if (uncached.length === 0) {
+            status.textContent = `All ${TOTAL} images loaded instantly from local cache!`;
+            return;
+        }
+
+        // Pass 2: render uncached in small batches
+        status.textContent = `rendering ${uncached.length} cells…`;
+
+        for (let b = 0; b < uncached.length; b += BATCH_SIZE) {
+            const batch = uncached.slice(b, b + BATCH_SIZE);
+            const done  = b + batch.length;
+            status.textContent = `rendering ${done} / ${uncached.length}…`;
+            await Promise.all(batch.map(renderCell));
+        }
+
+        status.textContent = `done · ${TOTAL} curated seeds loaded · Ctrl+Shift+R to re-render all`;
+    } catch (e) {
+        status.textContent = 'Failed to load seeds. Make sure curator server is running!';
+        console.error(e);
+    }
+}
+
+// ── Ctrl+Shift+R — wipe cache and reload ─────────────────────────────────────
+document.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'R') {
+        e.preventDefault();
+        // Caching is now done on the backend disk, so to clear the cache you can manually delete the files in /motor/cache
+        location.reload();
+    }
+});
+
+document.getElementById('gapToggle').addEventListener('click', () => {
+    document.getElementById('grid').classList.toggle('with-gap');
+});
+
+init();
+</script>
+
+</body>
+</html>

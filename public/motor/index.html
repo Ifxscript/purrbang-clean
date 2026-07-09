@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>p5.js Sketch</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <script>
+        // Read seed from URL and set HASH for the engine
+        const seed = new URLSearchParams(window.location.search).get("seed");
+        window.HASH = seed ? Number(seed) : Math.floor(Math.random() * 999999999999);
+    </script>
+    <script src="motor.js"></script>
+</body>
+
+</html>
