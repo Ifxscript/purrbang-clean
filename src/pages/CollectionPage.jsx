@@ -5,6 +5,7 @@ import SparkModal from '../components/SparkModal'
 import FilterSidebar from '../components/FilterSidebar'
 import TerminalSearch from '../components/TerminalSearch'
 import './CollectionPage.css'
+import imageUrls from '../image-urls.json'
 
 const HeaderLogo = () => (
     <svg viewBox="-30 -30 60 60" className="collection-page__logo">
@@ -188,7 +189,7 @@ function CollectionPage({ onNavigateToTraits }) {
             title: `Motor #${String(originalIndex + 1).padStart(3, '0')}`,
             inscriptionId: cat.inscriptionId,
             traits: cat.traits,
-            imageUrl: `/images/${cat.inscriptionId}.jpg`,
+            imageUrl: imageUrls[cat.inscriptionId] || `/images/${cat.inscriptionId}.jpg`,
             iframeUrl: `/motor/index.html?seed=${cat.seed}`
         };
     };
@@ -303,7 +304,7 @@ function CollectionPage({ onNavigateToTraits }) {
                             <SparkCard
                                 key={cat.inscriptionId}
                                 title={`Motor #${String(originalIndex + 1).padStart(3, '0')}`}
-                                imageUrl={`/images/${cat.inscriptionId}.jpg`}
+                                imageUrl={imageUrls[cat.inscriptionId] || `/images/${cat.inscriptionId}.jpg`}
                                 traits={cat.traits}
                                 onClick={() => handleCardClick(cat, index)}
                             />
