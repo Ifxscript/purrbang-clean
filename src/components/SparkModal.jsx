@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Copy, Check, ExternalLink, X, ChevronLeft, ChevronRight, ChevronDown, ArrowRight } from 'lucide-react';
 import './SparkModal.css';
-import imageUrls from '../image-urls.json';
 
 function SparkModal({ isOpen, onClose, data, allCats, currentIndex, onNavigate, theme }) {
     const [inscriptionData, setInscriptionData] = useState(null);
@@ -297,7 +296,7 @@ function SparkModal({ isOpen, onClose, data, allCats, currentIndex, onNavigate, 
                                     onClick={() => onNavigate(index)}
                                 >
                                     <img
-                                        src={index >= 0 && index <= 4 ? `/images-test/${index + 1}.jpg` : (imageUrls[cat.inscriptionId] || `/images/${cat.inscriptionId}.jpg`)}
+                                        src={`/images/${cat.inscriptionId}.jpg`}
                                         alt={`Motor #${String(index + 1).padStart(3, '0')}`}
                                         style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }}
                                     />

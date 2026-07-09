@@ -5,7 +5,6 @@ import SparkModal from '../components/SparkModal'
 import FilterSidebar from '../components/FilterSidebar'
 import TerminalSearch from '../components/TerminalSearch'
 import './CollectionPage.css'
-import imageUrls from '../image-urls.json'
 
 const HeaderLogo = () => (
     <svg viewBox="-30 -30 60 60" className="collection-page__logo">
@@ -189,7 +188,7 @@ function CollectionPage({ onNavigateToTraits }) {
             title: `Motor #${String(originalIndex + 1).padStart(3, '0')}`,
             inscriptionId: cat.inscriptionId,
             traits: cat.traits,
-            imageUrl: imageUrls[cat.inscriptionId] || `/images/${cat.inscriptionId}.jpg`,
+            imageUrl: `/images/${cat.inscriptionId}.jpg`,
             iframeUrl: `/motor/index.html?seed=${cat.seed}`
         };
     };
@@ -300,12 +299,11 @@ function CollectionPage({ onNavigateToTraits }) {
                 <main className={`collection-page__grid ${sidebarOpen ? 'sidebar-open' : ''} mobile-cols-${mobileGridCols}`}>
                     {displayedCats.map((cat, index) => {
                         const originalIndex = allCats.findIndex(c => c.inscriptionId === cat.inscriptionId);
-                        const isTestImage = originalIndex >= 0 && originalIndex <= 4;
                         return (
                             <SparkCard
                                 key={cat.inscriptionId}
                                 title={`Motor #${String(originalIndex + 1).padStart(3, '0')}`}
-                                imageUrl={isTestImage ? `/images-test/${originalIndex + 1}.jpg` : (imageUrls[cat.inscriptionId] || `/images/${cat.inscriptionId}.jpg`)}
+                                imageUrl={`/images/${cat.inscriptionId}.jpg`}
                                 traits={cat.traits}
                                 onClick={() => handleCardClick(cat, index)}
                             />
