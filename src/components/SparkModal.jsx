@@ -268,52 +268,13 @@ function SparkModal({ isOpen, onClose, data, allCats, currentIndex, onNavigate, 
             <div className="spark-modal__canvas">
                 {/* Image Panel - First on mobile */}
                 <div className="spark-modal__image-container">
-                    {!isMobilePortrait || loadInteractive ? (
-                        <iframe
-                            key={data.inscriptionId}
-                            src={data.iframeUrl}
-                            title={data.title}
-                            className="spark-modal__image"
-                            sandbox="allow-scripts allow-same-origin"
-                        />
-                    ) : (
-                        <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0b0b0b' }}>
-                            <img
-                                src={data.imageUrl}
-                                alt={data.title}
-                                className="spark-modal__image"
-                                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                            />
-                            <button
-                                onClick={() => setLoadInteractive(true)}
-                                style={{
-                                    position: 'absolute',
-                                    top: '50%',
-                                    left: '50%',
-                                    transform: 'translate(-50%, -50%)',
-                                    background: 'rgba(255, 84, 0, 0.9)',
-                                    border: 'none',
-                                    color: 'white',
-                                    padding: '14px 28px',
-                                    borderRadius: '30px',
-                                    cursor: 'pointer',
-                                    fontWeight: '700',
-                                    fontSize: '14px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    boxShadow: '0 4px 25px rgba(0,0,0,0.6)',
-                                    fontFamily: 'inherit',
-                                    backdropFilter: 'blur(4px)',
-                                    letterSpacing: '0.05em',
-                                    textTransform: 'uppercase',
-                                    transition: 'all 0.2s ease'
-                                }}
-                            >
-                                Run Engine ▶
-                            </button>
-                        </div>
-                    )}
+                    <iframe
+                        key={data.inscriptionId}
+                        src={data.iframeUrl}
+                        title={data.title}
+                        className="spark-modal__image"
+                        sandbox="allow-scripts allow-same-origin"
+                    />
                 </div>
 
                 {/* Thumbnail Strip - Only on mobile portrait, below image */}
