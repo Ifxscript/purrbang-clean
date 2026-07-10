@@ -41,15 +41,27 @@ function CollectionPage({ onNavigateToTraits }) {
     const [searchOpen, setSearchOpen] = useState(false);
     const [aboutOpen, setAboutOpen] = useState(false);
 
+    const [version, setVersion] = useState('v1'); // Toggle switcher between v1 (current) and v2 (new random curated set)
+
     // Load traits data
     useEffect(() => {
-        fetch('/all-traits.json')
+        const traitsFile = version === 'v2' ? '/all-traits-v2.json' : '/all-traits.json';
+        fetch(traitsFile)
             .then(res => res.json())
             .then(data => {
-                setAllCats(data);
+                // If V2, limit to the first 30 comparison items
+                const finalData = version === 'v2' ? data.slice(0, 30) : data;
+                setAllCats(finalData);
+                // Reset search results and filters so the grid displays cleanly
+                setSearchResult(null);
+                setFilters({
+                    "Palette": '',
+                    "Art Mode": '',
+                    "Gear Layout Mode": ''
+                });
             })
             .catch(err => console.error('Error loading traits:', err));
-    }, []);
+    }, [version]);
 
     // Fetch Crypto prices
     useEffect(() => {
@@ -189,7 +201,7 @@ function CollectionPage({ onNavigateToTraits }) {
             title: `Motor #${String(originalIndex + 1).padStart(3, '0')}`,
             inscriptionId: cat.inscriptionId,
             traits: cat.traits,
-            imageUrl: imageUrls[cat.inscriptionId] || `/images/${cat.inscriptionId}.jpg`,
+            imageUrl: version === 'v2' ? `/images-v2/${cat.inscriptionId}.jpg` : (imageUrls[cat.inscriptionId] || `/images/${cat.inscriptionId}.jpg`),
             iframeUrl: `/motor/index.html?seed=${cat.seed}`
         };
     };
@@ -270,6 +282,26 @@ function CollectionPage({ onNavigateToTraits }) {
                         <p className="collection-page__subtitle">{filteredCats.length} items</p>
                     </div>
                     <div className="collection-page__header-actions">
+                        <button
+                            className="collection-page__version-btn"
+                            onClick={() => setVersion(prev => prev === 'v1' ? 'v2' : 'v1')}
+                            title="Toggle Collection Version"
+                            style={{
+                                background: 'transparent',
+                                border: '1px solid var(--border-color, #333)',
+                                color: 'var(--text-color, #fff)',
+                                padding: '4px 8px',
+                                borderRadius: '4px',
+                                fontSize: '11px',
+                                fontFamily: 'monospace',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                            }}
+                        >
+                            SET: {version.toUpperCase()}
+                        </button>
                         <button 
                             className="collection-page__grid-toggle-btn-mobile" 
                             onClick={() => setMobileGridCols(prev => prev === 1 ? 2 : prev === 2 ? 3 : 1)}
@@ -304,7 +336,7 @@ function CollectionPage({ onNavigateToTraits }) {
                             <SparkCard
                                 key={cat.inscriptionId}
                                 title={`Motor #${String(originalIndex + 1).padStart(3, '0')}`}
-                                imageUrl={imageUrls[cat.inscriptionId] || `/images/${cat.inscriptionId}.jpg`}
+                                imageUrl={version === 'v2' ? `/images-v2/${cat.inscriptionId}.jpg` : (imageUrls[cat.inscriptionId] || `/images/${cat.inscriptionId}.jpg`)}
                                 traits={cat.traits}
                                 onClick={() => handleCardClick(cat, index)}
                             />
