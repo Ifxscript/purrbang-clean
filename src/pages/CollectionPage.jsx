@@ -6,6 +6,7 @@ import FilterSidebar from '../components/FilterSidebar'
 import TerminalSearch from '../components/TerminalSearch'
 import './CollectionPage.css'
 import imageUrls from '../image-urls.json'
+import imageUrlsV2 from '../image-urls-v2.json'
 
 const HeaderLogo = () => (
     <svg viewBox="-30 -30 60 60" className="collection-page__logo">
@@ -49,9 +50,7 @@ function CollectionPage({ onNavigateToTraits }) {
         fetch(traitsFile)
             .then(res => res.json())
             .then(data => {
-                // If V2, limit to the first 30 comparison items
-                const finalData = version === 'v2' ? data.slice(0, 30) : data;
-                setAllCats(finalData);
+                setAllCats(data);
                 // Reset search results and filters so the grid displays cleanly
                 setSearchResult(null);
                 setFilters({
@@ -358,6 +357,7 @@ function CollectionPage({ onNavigateToTraits }) {
                 currentIndex={selectedIndex}
                 onNavigate={handleNavigate}
                 theme={theme}
+                version={version}
             />
 
             {/* Fixed Footer */}
