@@ -44,12 +44,27 @@ function CollectionPage({ onNavigateToTraits }) {
 
     const [version, setVersion] = useState('v1'); // Toggle switcher between v1 (current) and v2 (new random curated set)
 
+    const cachedData = useRef({});
+
     // Load traits data
     useEffect(() => {
         const traitsFile = version === 'v2' ? '/all-traits-v2.json' : '/all-traits.json';
+        
+        if (cachedData.current[version]) {
+            setAllCats(cachedData.current[version]);
+            setSearchResult(null);
+            setFilters({
+                "Palette": '',
+                "Art Mode": '',
+                "Gear Layout Mode": ''
+            });
+            return;
+        }
+
         fetch(traitsFile)
             .then(res => res.json())
             .then(data => {
+                cachedData.current[version] = data;
                 setAllCats(data);
                 // Reset search results and filters so the grid displays cleanly
                 setSearchResult(null);
@@ -60,6 +75,20 @@ function CollectionPage({ onNavigateToTraits }) {
                 });
             })
             .catch(err => console.error('Error loading traits:', err));
+    }, [version]);
+
+    // Prefetch the other version in the background to completely eliminate lag when switching
+    useEffect(() => {
+        const otherVersion = version === 'v1' ? 'v2' : 'v1';
+        const otherFile = otherVersion === 'v2' ? '/all-traits-v2.json' : '/all-traits.json';
+        if (!cachedData.current[otherVersion]) {
+            fetch(otherFile)
+                .then(res => res.json())
+                .then(data => {
+                    cachedData.current[otherVersion] = data;
+                })
+                .catch(err => console.error('Background prefetch failed:', err));
+        }
     }, [version]);
 
     // Fetch Crypto prices
@@ -281,26 +310,6 @@ function CollectionPage({ onNavigateToTraits }) {
                         <p className="collection-page__subtitle">{filteredCats.length} items</p>
                     </div>
                     <div className="collection-page__header-actions">
-                        <button
-                            className="collection-page__version-btn"
-                            onClick={() => setVersion(prev => prev === 'v1' ? 'v2' : 'v1')}
-                            title="Toggle Collection Version"
-                            style={{
-                                background: 'transparent',
-                                border: '1px solid var(--border-color, #333)',
-                                color: 'var(--text-color, #fff)',
-                                padding: '4px 8px',
-                                borderRadius: '4px',
-                                fontSize: '11px',
-                                fontFamily: 'monospace',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                            }}
-                        >
-                            SET: {version.toUpperCase()}
-                        </button>
                         <button 
                             className="collection-page__grid-toggle-btn-mobile" 
                             onClick={() => setMobileGridCols(prev => prev === 1 ? 2 : prev === 2 ? 3 : 1)}
@@ -380,7 +389,27 @@ function CollectionPage({ onNavigateToTraits }) {
                         </div>
                     </div>
 
-                    <div className="collection-page__footer-actions">
+                    <div className="collection-page__footer-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <button
+                            className="collection-page__version-btn"
+                            onClick={() => setVersion(prev => prev === 'v1' ? 'v2' : 'v1')}
+                            title="Toggle Collection Version"
+                            style={{
+                                background: 'transparent',
+                                border: '1px solid var(--border-color, #333)',
+                                color: 'var(--text-color, #fff)',
+                                padding: '4px 8px',
+                                borderRadius: '4px',
+                                fontSize: '11px',
+                                fontFamily: 'monospace',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                            }}
+                        >
+                            SET: {version.toUpperCase()}
+                        </button>
                         <button
                             className={`collection-page__info-toggle ${aboutOpen ? 'active' : ''}`}
                             onClick={() => {
